@@ -43,7 +43,7 @@ class AnimationManager {
     };
 }
 
-export default function ASCIIAnimation({className = "", fps = 24, frameCount = 60, frameFolder = "frames"}) {
+export default function ASCIIAnimation({className = "", fps = 24, frameFolder = "frames"}) {
     const [frames, setFrames] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentFrame, setCurrentFrame] = useState(0);
@@ -61,30 +61,33 @@ export default function ASCIIAnimation({className = "", fps = 24, frameCount = 6
 
     useEffect(() => {
         const loadFrames = async () => {
-            try {
-                const frameFiles = Array.from({length: frameCount}, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.txt`);
-
-                const framePromises = frameFiles.map(async (filename) => {
-                    const response = await fetch(`/${frameFolder}/${filename}`);
+            const loadedFrames = [];
+            let i = 1;
+            let failed = false;
+            while (!failed) {
+                try {
+                    const filename = `frame_${String(i).padStart(4, "0")}.txt`;
+                    const response = await fetch(`/projects/${frameFolder}/${filename}`);
                     if (!response.ok) {
-                        throw new Error(`Failed to fetch ${filename}: ${response.status}`);
+                        failed = true;
+                    } else {
+                        const text = await response.text();
+                        loadedFrames.push(text);
+                        i++;
                     }
-                    return await response.text();
-                });
-
-                const loadedFrames = await Promise.all(framePromises);
-                setFrames(loadedFrames);
-                framesRef.current = loadedFrames;
-                setCurrentFrame(0);
-            } catch (error) {
-                console.error("Failed to load ASCII frames:", error);
-            } finally {
-                setIsLoading(false);
+                } catch (error) {
+                    failed = true;
+                }
             }
+            
+            setFrames(loadedFrames);
+            framesRef.current = loadedFrames;
+            setCurrentFrame(0);
+            setIsLoading(false);
         };
 
         loadFrames();
-    }, [frameCount, frameFolder]);
+    }, [frameFolder]);
 
     useEffect(() => {
         animationManager.updateFPS(fps);
