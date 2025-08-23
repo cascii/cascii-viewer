@@ -46,9 +46,8 @@ program
     .command('go')
     .description('Go to the install directory.')
     .action(() => {
-        console.log(`Going to ${installPath}`);
-        // This is tricky to do from a node script.
-        // The install script will create a shell function or alias for this.
+        // Print only the path so users can do: cd "$(cascii-view go)"
+        console.log(installPath);
     });
 
 program
@@ -135,12 +134,25 @@ program
         const projectName = path.basename(sourcePath);
         const destinationPath = path.join(projectsPath, projectName);
 
-        if (fs.existsSync(destinationPath)) {
-            console.log(chalk.yellow(`Project '${projectName}' already exists.`));
-            // In a future version, we could ask to overwrite. For now, we'll just open it.
+        // Determine action upfront
+        const config = getConfig();
+        const action = config.defaultAction || 'copy';
+
+        const resolvedSource = path.resolve(sourcePath);
+        const resolvedDest = path.resolve(destinationPath);
+
+        if (resolvedSource === resolvedDest) {
+            console.log(chalk.yellow(`Source path is already the installed project. Skipping transfer.`));
         } else {
-            const config = getConfig();
-            const action = config.defaultAction || 'copy';
+            if (fs.existsSync(destinationPath)) {
+                try {
+                    console.log(chalk.yellow(`Overwriting existing project '${projectName}'...`));
+                    fs.removeSync(destinationPath);
+                } catch (err) {
+                    console.error(chalk.red(`Failed to remove existing project '${projectName}':`), err);
+                    return;
+                }
+            }
 
             try {
                 if (action === 'move') {
@@ -172,7 +184,7 @@ function startServerAndOpen(projectName) {
             // Serve the React app
             app.use(express.static(wwwPath));
             // Serve the projects folder so the app can fetch frames
-            app.use('/projects', express.static(projectsPath));
+            app.use('/projects', express.static(projectsPath, { fallthrough: false }));
 
             // Dynamic projects list endpoint
             app.get('/projects.json', (req, res) => {
@@ -187,6 +199,21 @@ function startServerAndOpen(projectName) {
                     return res.json({ projects });
                 } catch (e) {
                     return res.json({ projects: [] });
+                }
+            });
+
+            // Frames metadata for a project (count)
+            app.get('/api/projects/:project/frames-count', (req, res) => {
+                const projectName = req.params.project;
+                try {
+                    const projectDir = path.join(projectsPath, projectName);
+                    if (!fs.existsSync(projectDir)) {
+                        return res.status(404).json({ frameCount: 0 });
+                    }
+                    const files = fs.readdirSync(projectDir).filter((f) => /^frame_\d{4}\.txt$/.test(f));
+                    return res.json({ frameCount: files.length });
+                } catch (e) {
+                    return res.status(500).json({ frameCount: 0 });
                 }
             });
             

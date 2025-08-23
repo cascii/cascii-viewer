@@ -61,29 +61,40 @@ export default function ASCIIAnimation({className = "", fps = 24, frameFolder = 
 
     useEffect(() => {
         const loadFrames = async () => {
-            const loadedFrames = [];
-            let i = 1;
-            let failed = false;
-            while (!failed) {
-                try {
-                    const filename = `frame_${String(i).padStart(4, "0")}.txt`;
+            try {
+                // Ask server for frame count
+                const metaRes = await fetch(`/api/projects/${encodeURIComponent(frameFolder)}/frames-count`);
+                let frameCount = 0;
+                if (metaRes.ok) {
+                    const meta = await metaRes.json();
+                    frameCount = Number(meta.frameCount) || 0;
+                }
+
+                if (frameCount <= 0) {
+                    setFrames([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                const frameFiles = Array.from({length: frameCount}, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.txt`);
+                const framePromises = frameFiles.map(async (filename) => {
                     const response = await fetch(`/projects/${frameFolder}/${filename}`);
                     if (!response.ok) {
-                        failed = true;
-                    } else {
-                        const text = await response.text();
-                        loadedFrames.push(text);
-                        i++;
+                        throw new Error(`Failed to fetch ${filename}: ${response.status}`);
                     }
-                } catch (error) {
-                    failed = true;
-                }
+                    return await response.text();
+                });
+
+                const loaded = await Promise.all(framePromises);
+                setFrames(loaded);
+                framesRef.current = loaded;
+                setCurrentFrame(0);
+            } catch (e) {
+                console.error("Failed to load ASCII frames:", e);
+                setFrames([]);
+            } finally {
+                setIsLoading(false);
             }
-            
-            setFrames(loadedFrames);
-            framesRef.current = loadedFrames;
-            setCurrentFrame(0);
-            setIsLoading(false);
         };
 
         loadFrames();
