@@ -3,79 +3,83 @@ import './styles/App.css';
 import ASCIIAnimation from './components/ASCIIAnimation';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('tests');
   const [projects, setProjects] = useState([]);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await fetch('/projects.json');
         if (!response.ok) {
-          // If projects.json doesn't exist, default to an empty array
-          if (response.status === 404) {
-            setProjects([]);
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
+          setProjects([]);
+          return;
         }
         const data = await response.json();
-        setProjects(data);
+        setProjects(data.projects || []);
+
+        const params = new URLSearchParams(window.location.search);
+        const projectFromUrl = params.get('project');
+
+        if (projectFromUrl && data.projects && data.projects.includes(projectFromUrl)) {
+          setCurrentProject(projectFromUrl);
+        }
+
       } catch (error) {
         console.error("Could not fetch projects:", error);
         setProjects([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProjects();
   }, []);
 
+  const renderContent = () => {
+    if (loading) {
+      return <p>Loading...</p>;
+    }
+
+    if (currentProject) {
+      return (
+        <div>
+          <h2>{currentProject}</h2>
+          <div className="animation-container">
+            <ASCIIAnimation frameFolder={currentProject} />
+          </div>
+        </div>
+      );
+    }
+
+    if (projects.length > 0) {
+      return (
+        <div>
+          <h2>Available Projects</h2>
+          <ul>
+            {projects.map(project => (
+              <li key={project}>
+                <a href={`/?project=${project}`}>{project}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    return <p>No projects found. Use the 'cascii-view' command to add a new project.</p>;
+  }
+
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Cascii Demo</h1>
-        <nav>
-          <button onClick={() => setActiveTab('tests')} className={activeTab === 'tests' ? 'active' : ''}>Tests</button>
-          <button onClick={() => setActiveTab('projects')} className={activeTab === 'projects' ? 'active' : ''}>Projects</button>
-        </nav>
+        <h1>CASCII Viewer</h1>
+        {currentProject && (
+          <a href="/" className="back-link">&larr; Back to project list</a>
+        )}
       </header>
       <main>
-        {activeTab === 'tests' && (
-          <>
-            <h2>Small</h2>
-            <div className="animation-container">
-              <ASCIIAnimation fps={24} frameCount={120} frameFolder="small" className="small-animation" />
-            </div>
-            <h2>Default</h2>
-            <div className="animation-container">
-              <ASCIIAnimation fps={24} frameCount={120} frameFolder="default" className="default-animation" />
-            </div>
-            <h2>Large</h2>
-            <div className="animation-container">
-              <ASCIIAnimation fps={60} frameCount={301} frameFolder="large" className="large-animation" />
-            </div>
-          </>
-        )}
-        {activeTab === 'projects' && (
-          <div>
-            {projects.length > 0 ? (
-              projects.map(project => (
-                <div key={project.name}>
-                  <h2>{project.name}</h2>
-                  <div className="animation-container">
-                    <ASCIIAnimation
-                      fps={project.fps}
-                      frameCount={project.frameCount}
-                      frameFolder={project.name}
-                      className="project-animation"
-                    />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>No projects found. Use the 'casci-demo' command to add a new project.</p>
-            )}
-          </div>
-        )}
+        {renderContent()}
       </main>
     </div>
   );
