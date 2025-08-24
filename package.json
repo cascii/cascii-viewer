@@ -2,7 +2,7 @@
   "name": "cascii-viewer",
   "version": "0.1.0",
   "private": true,
-  "publicUrl": "https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME",
+  "publicUrl": "https://cascii.github.io/cascii-viewer",
   "bin": {
     "cascii-view": "./cli.js"
   },
