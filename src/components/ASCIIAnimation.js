@@ -81,7 +81,7 @@ export default function ASCIIAnimation({className = "", fps = 24, frameFolder = 
                     return;
                 }
                 
-                const basePath = IS_STATIC_SHOWCASE ? '' : '/projects';
+                const basePath = IS_STATIC_SHOWCASE ? (process.env.PUBLIC_URL || '') : '/projects';
 
                 const frameFiles = Array.from({length: frameCount}, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.txt`);
                 const framePromises = frameFiles.map(async (filename) => {

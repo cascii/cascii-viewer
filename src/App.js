@@ -69,9 +69,7 @@ function App() {
         <div>
           <h2>{currentProject}</h2>
           <div className="animation-container">
-            <ASCIIAnimation 
-              frameFolder={currentProject}
-              frameCount={projectData?.frameCount} // Will be undefined for local version, which is fine
+            <ASCIIAnimation frameFolder={currentProject} frameCount={projectData?.frameCount} // Will be undefined for local version, which is fine
               fps={projectData?.fps} // Will be undefined for local version, using component default
             />
           </div>
@@ -87,12 +85,7 @@ function App() {
             <div key={project.name}>
               <h2>{project.name}</h2>
               <div className="animation-container">
-                <ASCIIAnimation
-                  className={`animation-${project.name}`}
-                  frameFolder={project.name}
-                  frameCount={project.frameCount}
-                  fps={project.fps}
-                />
+                <ASCIIAnimation className={`animation-${project.name}`}frameFolder={project.name}frameCount={project.frameCount}fps={project.fps} />
               </div>
             </div>
           ))}
@@ -104,13 +97,7 @@ function App() {
       return (
         <div>
           <h2>Available Projects</h2>
-          <ul>
-            {projects.map(project => (
-              <li key={project}>
-                <a href={`?project=${project}`}>{project}</a>
-              </li>
-            ))}
-          </ul>
+          <ul>{projects.map(project => (<li key={project}><a href={`?project=${project}`}>{project}</a></li>))}</ul>
         </div>
       );
     }
@@ -122,9 +109,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>CASCII Viewer</h1>
-        {currentProject && (
-          <a href="/" className="back-link">&larr; Back to project list</a>
-        )}
+        {currentProject && (<a href="./" className="back-link">&larr; Back to project list</a>)}
       </header>
       <main>
         {renderContent()}

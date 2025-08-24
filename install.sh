@@ -20,8 +20,8 @@ mkdir -p "$PROJECTS_DIR"
 mkdir -p "$WWW_DIR"
 
 # Build React app
-echo "Building the React app..."
-npm run build
+echo "Building the React app (local deployment)..."
+npm run build:local
 
 # Copy build files
 echo "Copying React app files..."
