@@ -2,7 +2,7 @@
   "name": "cascii-viewer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME",
+  "publicUrl": "https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME",
   "bin": {
     "cascii-view": "./cli.js"
   },
@@ -21,7 +21,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:gh": "REACT_APP_DEPLOY_TARGET=gh-pages react-scripts build",
+    "build:gh": "PUBLIC_URL=${npm_package_publicUrl} REACT_APP_DEPLOY_TARGET=gh-pages react-scripts build",
     "predeploy": "npm run build:gh",
     "deploy": "gh-pages -d build",
     "test": "react-scripts test",

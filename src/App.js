@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './styles/App.css';
 import ASCIIAnimation from './components/ASCIIAnimation';
 
-const IS_GH_PAGES = process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
+const IS_STATIC_SHOWCASE = process.env.NODE_ENV === 'development' || process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
 
 const GH_PAGES_PROJECTS = [
   { name: 'small', frameCount: 120, fps: 24 },
@@ -17,11 +17,12 @@ function App() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (IS_GH_PAGES) {
+      if (IS_STATIC_SHOWCASE) {
         setProjects(GH_PAGES_PROJECTS.map(p => p.name));
         
         const params = new URLSearchParams(window.location.search);
         const projectFromUrl = params.get('project');
+
         if (projectFromUrl && GH_PAGES_PROJECTS.some(p => p.name === projectFromUrl)) {
           setCurrentProject(projectFromUrl);
         }
@@ -63,7 +64,7 @@ function App() {
     }
 
     if (currentProject) {
-      const projectData = IS_GH_PAGES ? GH_PAGES_PROJECTS.find(p => p.name === currentProject) : null;
+      const projectData = IS_STATIC_SHOWCASE ? GH_PAGES_PROJECTS.find(p => p.name === currentProject) : null;
       return (
         <div>
           <h2>{currentProject}</h2>
@@ -74,6 +75,27 @@ function App() {
               fps={projectData?.fps} // Will be undefined for local version, using component default
             />
           </div>
+        </div>
+      );
+    }
+
+    // If in showcase mode and no specific project is selected, show all showcase projects.
+    if (IS_STATIC_SHOWCASE) {
+      return (
+        <div>
+          {GH_PAGES_PROJECTS.map(project => (
+            <div key={project.name}>
+              <h2>{project.name}</h2>
+              <div className="animation-container">
+                <ASCIIAnimation
+                  className={`animation-${project.name}`}
+                  frameFolder={project.name}
+                  frameCount={project.frameCount}
+                  fps={project.fps}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
