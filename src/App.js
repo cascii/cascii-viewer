@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import './styles/App.css';
 import ASCIIAnimation from './components/ASCIIAnimation';
 
+const IS_GH_PAGES = process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
+
+const GH_PAGES_PROJECTS = [
+  { name: 'small', frameCount: 120, fps: 24 },
+  { name: 'default', frameCount: 120, fps: 24 },
+  { name: 'large', frameCount: 301, fps: 60 },
+];
+
 function App() {
   const [projects, setProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
@@ -9,6 +17,19 @@ function App() {
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (IS_GH_PAGES) {
+        setProjects(GH_PAGES_PROJECTS.map(p => p.name));
+        
+        const params = new URLSearchParams(window.location.search);
+        const projectFromUrl = params.get('project');
+        if (projectFromUrl && GH_PAGES_PROJECTS.some(p => p.name === projectFromUrl)) {
+          setCurrentProject(projectFromUrl);
+        }
+
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch('/projects.json');
         if (!response.ok) {
@@ -42,11 +63,16 @@ function App() {
     }
 
     if (currentProject) {
+      const projectData = IS_GH_PAGES ? GH_PAGES_PROJECTS.find(p => p.name === currentProject) : null;
       return (
         <div>
           <h2>{currentProject}</h2>
           <div className="animation-container">
-            <ASCIIAnimation frameFolder={currentProject} />
+            <ASCIIAnimation 
+              frameFolder={currentProject}
+              frameCount={projectData?.frameCount} // Will be undefined for local version, which is fine
+              fps={projectData?.fps} // Will be undefined for local version, using component default
+            />
           </div>
         </div>
       );
@@ -59,7 +85,7 @@ function App() {
           <ul>
             {projects.map(project => (
               <li key={project}>
-                <a href={`/?project=${project}`}>{project}</a>
+                <a href={`?project=${project}`}>{project}</a>
               </li>
             ))}
           </ul>

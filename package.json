@@ -2,15 +2,16 @@
   "name": "cascii-viewer",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME",
   "bin": {
     "cascii-view": "./cli.js"
   },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^12.0.0",
-    "express": "^4.19.2",
     "fs-extra": "^11.2.0",
     "inquirer": "^9.2.20",
+    "mime-types": "^2.1.35",
     "open": "^7.4.2",
     "portfinder": "^1.0.32",
     "react": "^18.2.0",
@@ -20,6 +21,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:gh": "REACT_APP_DEPLOY_TARGET=gh-pages react-scripts build",
+    "predeploy": "npm run build:gh",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -40,5 +44,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
