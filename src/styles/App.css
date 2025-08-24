@@ -35,37 +35,73 @@ main {
   align-items: center;
   gap: 2rem;
   flex-grow: 1;
-  justify-content: center;
+  /* Let the content define the justification, don't force center */
 }
 
 .animation-container {
   border: 1px solid #333;
   padding: 1rem;
   border-radius: 8px;
-  width: fit-content;
-  margin: 0 auto;
+  width: 80%; /* Take 80% of the parent's width */
+  margin: 0 auto; /* Center the container */
+  box-sizing: border-box; /* Include padding and border in the width */
+  overflow: hidden; /* Hide any content that overflows the container */
+  text-align: center; /* Center the actual animation block */
 }
 
-.small-animation,
-.default-animation,
-.large-animation,
+/* Base font-family for all animations */
+pre.animation-small,
+pre.animation-default,
+pre.animation-large {
+  font-family: 'Courier New', Courier, monospace;
+  display: inline-block; /* Allow the block to be centered */
+  text-align: left; /* Keep the art itself left-aligned within its block */
+  margin: 0; /* Reset browser default margins */
+}
+
+/* Base font size for default and small */
+pre.animation-small,
+pre.animation-default {
+  font-size: 0.8vw; /* Slightly smaller to ensure it fits */
+}
+
+/* Make the font for the 'large' animation much smaller and responsive */
+pre.animation-large {
+  font-size: 0.2vw; /* Larger than before, but still small enough to fit */
+  line-height: 1;
+}
+
+/* Fallback for projects added via CLI */
 .project-animation {
   font-family: 'Courier New', Courier, monospace;
-}
-
-.small-animation {
-  font-size: 1.2vw;
-}
-
-.default-animation {
-  font-size: 0.6vw;
-}
-
-.large-animation {
-  font-size: 0.15vw;
-}
-
-.project-animation {
-  /* You might want a default size for projects, or pass it as a prop */
   font-size: 0.5vw;
+}
+
+.back-link {
+  color: #61dafb;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li a {
+  color: #61dafb;
+  font-size: 1.5rem;
+  text-decoration: none;
+  padding: 0.5rem;
+  display: inline-block;
+}
+
+/* Optional micro-adjustment offsets to visually align art under titles */
+pre.animation-default {
+  transform: translateX(-0.5%);
+}
+
+pre.animation-large {
+  transform: translateX(-1%);
 }

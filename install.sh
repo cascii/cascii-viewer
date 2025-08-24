@@ -11,6 +11,7 @@ PROJECTS_DIR="$INSTALL_DIR/projects"
 WWW_DIR="$INSTALL_DIR/www"
 BIN_DIR="/usr/local/bin"
 EXECUTABLE_NAME="cascii-view"
+EXECUTABLE_ALIAS="casci-view"
 CLI_SCRIPT_NAME="cli.js"
 
 # Create directories
@@ -49,25 +50,34 @@ echo "Creating config file..."
 echo "{\"defaultAction\": \"$defaultAction\"}" > config.json
 
 
-# Create the executable in /usr/local/bin
-echo "Creating executable in $BIN_DIR..."
+# Create the executables in /usr/local/bin
+echo "Creating executables in $BIN_DIR..."
 cat << EOF > "$EXECUTABLE_NAME"
 #!/bin/bash
 node "$INSTALL_DIR/$CLI_SCRIPT_NAME" "\$@"
 EOF
 
-chmod +x "$EXECUTABLE_NAME"
-# Use sudo to move the executable. This might prompt the user for a password.
+cat << EOF > "$EXECUTABLE_ALIAS"
+#!/bin/bash
+node "$INSTALL_DIR/$CLI_SCRIPT_NAME" "\$@"
+EOF
+
+chmod +x "$EXECUTABLE_NAME" "$EXECUTABLE_ALIAS"
+# Use sudo to move the executables. This might prompt the user for a password.
 sudo mv "$EXECUTABLE_NAME" "$BIN_DIR/"
+sudo mv "$EXECUTABLE_ALIAS" "$BIN_DIR/"
 
 echo ""
 echo "Installation complete!"
-echo "You can now use the 'cascii-view' command."
+echo "You can now use the 'cascii-view' or 'casci-view' commands."
 echo ""
 
 # Attempt to configure 'cascii-view go' command automatically
 SHELL_CONFIG_FILE=""
-CURRENT_SHELL=$(basename "$SHELL")
+CURRENT_SHELL=
+if [ -n "$SHELL" ]; then
+  CURRENT_SHELL=$(basename "$SHELL")
+fi
 
 if [ "$CURRENT_SHELL" = "zsh" ]; then
     SHELL_CONFIG_FILE="$HOME/.zshrc"
@@ -75,11 +85,11 @@ elif [ "$CURRENT_SHELL" = "bash" ]; then
     SHELL_CONFIG_FILE="$HOME/.bashrc"
 fi
 
-MANUAL_INSTRUCTIONS="To enable the 'cascii-view go' command, add the following function to your shell's config file (.zshrc, .bashrc, etc.):"
+MANUAL_INSTRUCTIONS="To enable the '... go' helper, add the following functions to your shell's config file (.zshrc, .bashrc, etc.):"
 
 FN_DEFINITION=$(cat << 'EOF'
 
-# CASCII Viewer 'go' command
+# CASCII Viewer 'go' helper for both command names
 cascii-view() {
     if [[ $1 == "go" ]]; then
         cd ~/.cascii-viewer
@@ -87,16 +97,28 @@ cascii-view() {
         command cascii-view "$@"
     fi
 }
+
+casci-view() {
+    if [[ $1 == "go" ]]; then
+        cd ~/.cascii-viewer
+    else
+        command casci-view "$@"
+    fi
+}
 EOF
 )
 
 if [ -n "$SHELL_CONFIG_FILE" ] && [ -f "$SHELL_CONFIG_FILE" ]; then
+    ADDED_ANY=false
     if ! grep -q "cascii-view()" "$SHELL_CONFIG_FILE"; then
         echo "Adding 'cascii-view' function to your $SHELL_CONFIG_FILE for the 'go' command."
         echo "$FN_DEFINITION" >> "$SHELL_CONFIG_FILE"
-        echo "Successfully added! Please run 'source $SHELL_CONFIG_FILE' or open a new terminal to use 'cascii-view go'."
+        ADDED_ANY=true
+    fi
+    if [ "$ADDED_ANY" = true ]; then
+        echo "Successfully added! Please run 'source $SHELL_CONFIG_FILE' or open a new terminal to use the '... go' helper."
     else
-        echo "'cascii-view' function already found in $SHELL_CONFIG_FILE. Skipping."
+        echo "Helper functions already present in $SHELL_CONFIG_FILE. Skipping."
     fi
 else
     echo "$MANUAL_INSTRUCTIONS"

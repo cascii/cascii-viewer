@@ -152,9 +152,6 @@ program
     });
 
 program
-    .option('--get <projectName>', 'Display a specific project.');
-    
-program
     .command('delete <projectName>')
     .description('Delete a project.')
     .action((projectName) => {
@@ -176,118 +173,101 @@ program
         }
     });
 
-// Make the <sourcePath> argument the default behavior if no other command is specified.
 program
     .argument('[sourcePath]', 'Path to the project folder to add.')
+    .option('--get <projectName>', 'Display a specific project.')
     .action(async (sourcePath) => {
-
-        // If a known command is being run, don't treat it as a source path.
-        const knownCommands = program.commands.map(cmd => cmd.name());
-        if (sourcePath && knownCommands.includes(sourcePath)) {
-            // Let commander handle the command.
-            return;
-        }
-
-        // Also check if an option was passed without a source path.
         const options = program.opts();
-        if (!sourcePath) {
-             if (options.get) {
-                // Handled after parse
-                return;
-             }
-             // If we are here, no source path, no known command, no handled option.
-             // Commander will show help by default if no args are given.
-             return;
-        }
 
-        // Validate the source path
-        try {
-            if (!fs.statSync(sourcePath).isDirectory()) {
-                console.log(chalk.red(`Error: '${sourcePath}' is not a directory.`));
+        // --get <project>
+        if (options.get) {
+            const projectName = options.get;
+            if (!fs.existsSync(installPath)) {
+                console.log(chalk.red('cascii-view is not installed. Please run the install script.'));
                 return;
             }
-            const frameFiles = fs.readdirSync(sourcePath).filter(f => f.startsWith('frame_') && f.endsWith('.txt'));
-            if (frameFiles.length === 0) {
-                console.log(chalk.red(`Error: No frame files (frame_*.txt) found in '${sourcePath}'.`));
+            const projectPath = path.join(projectsPath, projectName);
+            if (!fs.existsSync(projectPath)) {
+                console.log(chalk.red(`Project '${projectName}' not found.`));
                 return;
             }
-        } catch (error) {
-            console.log(chalk.red(`Error: Source path '${sourcePath}' not found or is not accessible.`));
+            updateProjectsJson();
+            startServerAndOpen(projectName);
             return;
         }
-        
-        // Add the project
-        if (!fs.existsSync(installPath)) {
-            console.log(chalk.red('cascii-view is not installed. Please run the install script.'));
-            return;
-        }
-        const projectName = path.basename(sourcePath);
-        const destinationPath = path.join(projectsPath, projectName);
 
-        // Determine action upfront
-        const config = getConfig();
-        const action = config.defaultAction || 'copy';
+        // Add from sourcePath if provided
+        if (sourcePath) {
+            try {
+                if (!fs.statSync(sourcePath).isDirectory()) {
+                    console.log(chalk.red(`Error: '${sourcePath}' is not a directory.`));
+                    return;
+                }
+                const frameFiles = fs.readdirSync(sourcePath).filter(f => f.startsWith('frame_') && f.endsWith('.txt'));
+                if (frameFiles.length === 0) {
+                    console.log(chalk.red(`Error: No frame files (frame_*.txt) found in '${sourcePath}'.`));
+                    return;
+                }
+            } catch (error) {
+                console.log(chalk.red(`Error: Source path '${sourcePath}' not found or is not accessible.`));
+                return;
+            }
+            
+            if (!fs.existsSync(installPath)) {
+                console.log(chalk.red('cascii-view is not installed. Please run the install script.'));
+                return;
+            }
+            const projectName = path.basename(sourcePath);
+            const destinationPath = path.join(projectsPath, projectName);
 
-        const resolvedSource = path.resolve(sourcePath);
-        const resolvedDest = path.resolve(destinationPath);
+            const config = getConfig();
+            const action = config.defaultAction || 'copy';
+            const resolvedSource = path.resolve(sourcePath);
+            const resolvedDest = path.resolve(destinationPath);
 
-        if (resolvedSource === resolvedDest) {
-            console.log(chalk.yellow(`Source path is already the installed project. Skipping transfer.`));
-        } else {
-            if (fs.existsSync(destinationPath)) {
+            if (resolvedSource === resolvedDest) {
+                console.log(chalk.yellow(`Source path is already the installed project. Skipping transfer.`));
+            } else {
+                if (fs.existsSync(destinationPath)) {
+                    try {
+                        console.log(chalk.yellow(`Overwriting existing project '${projectName}'...`));
+                        fs.removeSync(destinationPath);
+                    } catch (err) {
+                        console.error(chalk.red(`Failed to remove existing project '${projectName}':`), err);
+                        return;
+                    }
+                }
                 try {
-                    console.log(chalk.yellow(`Overwriting existing project '${projectName}'...`));
-                    fs.removeSync(destinationPath);
-                } catch (err) {
-                    console.error(chalk.red(`Failed to remove existing project '${projectName}':`), err);
+                    if (action === 'move') {
+                        fs.moveSync(sourcePath, destinationPath);
+                        console.log(chalk.green(`Successfully moved project '${projectName}'.`));
+                    } else {
+                        fs.copySync(sourcePath, destinationPath);
+                        console.log(chalk.green(`Successfully copied project '${projectName}'.`));
+                    }
+                } catch (error) {
+                    console.error(chalk.red(`Error ${action}ing project:`), error);
                     return;
                 }
             }
 
-            try {
-                if (action === 'move') {
-                    fs.moveSync(sourcePath, destinationPath);
-                    console.log(chalk.green(`Successfully moved project '${projectName}'.`));
-                } else {
-                    fs.copySync(sourcePath, destinationPath);
-                    console.log(chalk.green(`Successfully copied project '${projectName}'.`));
-                }
-            } catch (error) {
-                console.error(chalk.red(`Error ${action}ing project:`), error);
-                return; // Don't try to open if adding failed
-            }
+            updateProjectsJson();
+            startServerAndOpen(projectName);
+            return;
         }
 
-        // Ensure projects.json is up to date even if project already existed
-        updateProjectsJson();
-
-        // Open the app by starting a server
-        startServerAndOpen(projectName);
+        // No args: open home
+        startServerAndOpen(null);
     });
 
 program.parse(process.argv);
 
-const options = program.opts();
-if (options.get) {
-    const projectName = options.get;
-    if (!fs.existsSync(installPath)) {
-        console.log(chalk.red('cascii-view is not installed. Please run the install script.'));
-        return;
-    }
-    const projectPath = path.join(projectsPath, projectName);
-    if (!fs.existsSync(projectPath)) {
-        console.log(chalk.red(`Project '${projectName}' not found.`));
-        return;
-    }
-
-    // Keep the projects list current
-    updateProjectsJson();
-
-    startServerAndOpen(projectName);
-}
+// --- Main Logic ---
 
 
 function startServerAndOpen(projectName) {
+    portfinder.basePort = 55000; // Prefer high/private ports to avoid conflicts
+    portfinder.highestPort = 59999;
     portfinder.getPortPromise()
         .then((port) => {
             const app = http.createServer(async (req, res) => {
@@ -371,8 +351,8 @@ function startServerAndOpen(projectName) {
 
             app.listen(port, () => {
                 console.log(chalk.green(`CASCII Viewer server is running at http://localhost:${port}`));
-                const appUrl = `http://localhost:${port}?project=${projectName}`;
-                console.log(chalk.green(`Opening project '${projectName}' in your browser.`));
+                const appUrl = projectName ? `http://localhost:${port}?project=${projectName}` : `http://localhost:${port}/`;
+                console.log(chalk.green(`Opening ${projectName ? `project '${projectName}'` : 'CASCII Viewer'} in your browser.`));
                 open(appUrl);
             });
         })

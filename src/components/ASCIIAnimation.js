@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 
-const IS_GH_PAGES = process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
+const IS_STATIC_SHOWCASE = process.env.NODE_ENV === 'development' || process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
 
 class AnimationManager {
     _animation = null;
@@ -81,10 +81,7 @@ export default function ASCIIAnimation({className = "", fps = 24, frameFolder = 
                     return;
                 }
                 
-                // For GH Pages, the /public folder is at the root.
-                // For local server, we serve projects at /projects.
-                // Create React App handles the base path automatically from `homepage` in package.json
-                const basePath = IS_GH_PAGES ? '' : '/projects';
+                const basePath = IS_STATIC_SHOWCASE ? '' : '/projects';
 
                 const frameFiles = Array.from({length: frameCount}, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.txt`);
                 const framePromises = frameFiles.map(async (filename) => {
