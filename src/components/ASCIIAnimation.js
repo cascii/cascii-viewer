@@ -1,5 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 
+const IS_STATIC_SHOWCASE = process.env.NODE_ENV === 'development' || process.env.REACT_APP_DEPLOY_TARGET === 'gh-pages';
+
 class AnimationManager {
     _animation = null;
     callback;
@@ -43,7 +45,7 @@ class AnimationManager {
     };
 }
 
-export default function ASCIIAnimation({className = "", fps = 24, frameFolder = "frames"}) {
+export default function ASCIIAnimation({className = "", fps = 24, frameFolder = "frames", frameCount: frameCountProp}) {
     const [frames, setFrames] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentFrame, setCurrentFrame] = useState(0);
@@ -62,23 +64,28 @@ export default function ASCIIAnimation({className = "", fps = 24, frameFolder = 
     useEffect(() => {
         const loadFrames = async () => {
             try {
-                // Ask server for frame count
-                const metaRes = await fetch(`/api/projects/${encodeURIComponent(frameFolder)}/frames-count`);
-                let frameCount = 0;
-                if (metaRes.ok) {
-                    const meta = await metaRes.json();
-                    frameCount = Number(meta.frameCount) || 0;
+                let frameCount = frameCountProp;
+
+                // If frameCount is not provided (local server version), fetch it.
+                if (typeof frameCount !== 'number') {
+                    const metaRes = await fetch(`/api/projects/${encodeURIComponent(frameFolder)}/frames-count`);
+                    if (metaRes.ok) {
+                        const meta = await metaRes.json();
+                        frameCount = Number(meta.frameCount) || 0;
+                    }
                 }
 
-                if (frameCount <= 0) {
+                if (!frameCount || frameCount <= 0) {
                     setFrames([]);
                     setIsLoading(false);
                     return;
                 }
+                
+                const basePath = IS_STATIC_SHOWCASE ? '' : '/projects';
 
                 const frameFiles = Array.from({length: frameCount}, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.txt`);
                 const framePromises = frameFiles.map(async (filename) => {
-                    const response = await fetch(`/projects/${frameFolder}/${filename}`);
+                    const response = await fetch(`${basePath}/${frameFolder}/${filename}`);
                     if (!response.ok) {
                         throw new Error(`Failed to fetch ${filename}: ${response.status}`);
                     }
@@ -98,7 +105,7 @@ export default function ASCIIAnimation({className = "", fps = 24, frameFolder = 
         };
 
         loadFrames();
-    }, [frameFolder]);
+    }, [frameFolder, frameCountProp]);
 
     useEffect(() => {
         animationManager.updateFPS(fps);
