@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/cascii-viewer/static/css/main.bd514a78.css",
-    "main.js": "/cascii-viewer/static/js/main.bd0edb0a.js",
-    "index.html": "/cascii-viewer/index.html",
-    "main.bd514a78.css.map": "/cascii-viewer/static/css/main.bd514a78.css.map",
-    "main.bd0edb0a.js.map": "/cascii-viewer/static/js/main.bd0edb0a.js.map"
+    "main.css": "./static/css/main.bd514a78.css",
+    "main.js": "./static/js/main.eda214ca.js",
+    "index.html": "./index.html",
+    "main.bd514a78.css.map": "./static/css/main.bd514a78.css.map",
+    "main.eda214ca.js.map": "./static/js/main.eda214ca.js.map"
   },
   "entrypoints": [
     "static/css/main.bd514a78.css",
-    "static/js/main.bd0edb0a.js"
+    "static/js/main.eda214ca.js"
   ]
 }
