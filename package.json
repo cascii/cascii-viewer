@@ -2,8 +2,8 @@
   "name": "cascii-viewer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://cascii.github.io/cascii-viewer",
-  "publicUrl": "https://cascii.github.io/cascii-viewer",
+  "homepage": "https://cascii.com",
+  "publicUrl": "https://cascii.com",
   "bin": {
     "cascii-view": "./cli.js"
   },
