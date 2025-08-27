@@ -25,7 +25,7 @@
     "build:local": "PUBLIC_URL=/ REACT_APP_DEPLOY_TARGET=local react-scripts build",
     "build:gh": "PUBLIC_URL=. REACT_APP_DEPLOY_TARGET=gh-pages react-scripts build",
     "predeploy": "npm run build:gh",
-    "deploy": "gh-pages -d build -b gh-pages -c cascii.com",
+    "deploy": "gh-pages -d build -b gh-pages",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
